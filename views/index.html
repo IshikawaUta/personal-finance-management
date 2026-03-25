@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GlowFinance | Personal Finance Manager</title>
+    <link rel="icon" href="https://img.icons8.com/?size=100&id=w7LyPPqkXk1S&format=png&color=000000" type="image/png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: linear-gradient(135deg, #f0f4f8 0%, #e2e8f0 100%);
+            min-height: 100vh;
+            color: #1e293b;
+        }
+        .glass {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            transition: all 0.3s ease;
+        }
+        .glass-card:hover {
+            background: rgba(255, 255, 255, 0.8);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+        }
+        .gradient-text {
+            background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+            color: white;
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover {
+            opacity: 0.9;
+            transform: scale(1.02);
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: #6366f1 !important;
+            ring: 2px solid rgba(99, 102, 241, 0.2);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(99, 102, 241, 0.3);
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: rgba(99, 102, 241, 0.5);
+        }
+        
+        /* Toast Notifications */
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes fadeOut {
+            from { opacity: 1; transform: translateY(0); }
+            to { opacity: 0; transform: translateY(-20px); }
+        }
+        .toast {
+            animation: slideIn 0.3s ease forwards;
+        }
+        .toast.hiding {
+            animation: fadeOut 0.5s ease forwards;
+        }
+        @media (max-width: 640px) {
+            .toast {
+                left: 1.5rem;
+                right: 1.5rem;
+                min-width: auto;
+            }
+        }
+    </style>
+</head>
+<body class="p-0 m-0 overflow-x-hidden">
+    <!-- Toast Container -->
+    <div id="toast-container" class="fixed top-24 right-6 z-[200] flex flex-col gap-3 pointer-events-none"></div>
+
+    <!-- Navbar -->
+    <nav id="navbar" class="hidden fixed top-0 w-full z-50 glass border-b border-white/20">
+        <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <div class="p-2 bg-indigo-500 rounded-xl text-white">
+                    <i data-lucide="wallet"></i>
+                </div>
+                <span class="text-xl font-bold gradient-text">GlowFinance</span>
+            </div>
+            <div class="hidden md:flex items-center gap-6">
+                <a href="javascript:void(0)" onclick="showSection('dashboard')" class="text-gray-600 hover:text-indigo-600 transition-colors">Beranda</a>
+                <a href="javascript:void(0)" onclick="showSection('transactions')" class="text-gray-600 hover:text-indigo-600 transition-colors">Transaksi</a>
+                <a href="javascript:void(0)" onclick="showSection('budgets')" class="text-gray-600 hover:text-indigo-600 transition-colors">Anggaran</a>
+                <a href="javascript:void(0)" onclick="showSection('goals')" class="text-gray-600 hover:text-indigo-600 transition-colors">Tabungan</a>
+                <button onclick="logout()" class="ml-4 p-2 text-gray-400 hover:text-red-500 transition-colors">
+                    <i data-lucide="log-out"></i>
+                </button>
+            </div>
+            <div class="md:hidden flex items-center">
+                 <button onclick="logout()" class="p-2 text-gray-400 hover:text-red-500 transition-colors">
+                    <i data-lucide="log-out"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Mobile Bottom Nav -->
+    <nav id="mobile-nav" class="hidden fixed bottom-2 left-0 right-0 z-50 glass border-t border-white/20 md:hidden pb-safe">
+        <div class="flex justify-around items-center h-16">
+            <button onclick="showSection('dashboard')" class="flex flex-col items-center gap-1 text-gray-500 hover:text-indigo-600 transition-colors">
+                <i data-lucide="home" class="w-5 h-5"></i>
+                <span class="text-[10px] font-bold uppercase">Beranda</span>
+            </button>
+            <button onclick="showSection('transactions')" class="flex flex-col items-center gap-1 text-gray-500 hover:text-indigo-600 transition-colors">
+                <i data-lucide="list" class="w-5 h-5"></i>
+                <span class="text-[10px] font-bold uppercase">Transaksi</span>
+            </button>
+            <button onclick="openTransactionModal()" class="flex flex-col items-center -mt-8">
+                <div class="p-4 bg-indigo-600 rounded-full text-white shadow-lg shadow-indigo-200 ring-4 ring-white">
+                    <i data-lucide="plus" class="w-6 h-6"></i>
+                </div>
+            </button>
+            <button onclick="showSection('budgets')" class="flex flex-col items-center gap-1 text-gray-500 hover:text-indigo-600 transition-colors">
+                <i data-lucide="pie-chart" class="w-5 h-5"></i>
+                <span class="text-[10px] font-bold uppercase">Anggaran</span>
+            </button>
+            <button onclick="showSection('goals')" class="flex flex-col items-center gap-1 text-gray-500 hover:text-indigo-600 transition-colors">
+                <i data-lucide="target" class="w-5 h-5"></i>
+                <span class="text-[10px] font-bold uppercase">Tabungan</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Main Content Container -->
+    <main class="max-w-7xl mx-auto px-4 pt-24 pb-24 md:pb-12">
+        <!-- Landing Page Section -->
+        <section id="landing-section" class="flex flex-col items-center justify-center min-h-[80vh] text-center">
+            <div class="glass p-8 rounded-3xl max-w-2xl mb-12">
+                <h1 class="text-5xl font-extrabold mb-6 leading-tight">Kelola Keuangan dengan <span class="gradient-text pr-2">Kejelasan Sempurna</span>.</h1>
+                <p class="text-gray-600 text-lg mb-8">GlowFinance adalah asisten keuangan pribadi Anda. Catat pengeluaran, atur anggaran, dan capai target finansial dengan mudah.</p>
+                <div class="flex gap-4 justify-center">
+                    <button onclick="showSection('signup')" class="btn-primary px-8 py-4 rounded-2xl font-semibold shadow-lg shadow-indigo-200">Mulai Sekarang</button>
+                    <button onclick="showSection('login')" class="glass px-8 py-4 rounded-2xl font-semibold border-white/50">Masuk ke Akun</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Auth Sections -->
+        <section id="login-section" class="hidden max-w-md mx-auto">
+            <div class="glass p-8 rounded-3xl shadow-xl">
+                <h2 class="text-3xl font-bold mb-6 text-center">Selamat Datang Kembali</h2>
+                <form id="login-form">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Alamat Email</label>
+                        <input type="email" name="email" required class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-500 transition-all">
+                    </div>
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Kata Sandi</label>
+                        <input type="password" name="password" required class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-500 transition-all">
+                    </div>
+                    <button type="submit" class="w-full btn-primary py-4 rounded-xl font-bold shadow-lg shadow-indigo-100 uppercase tracking-wider">Masuk</button>
+                </form>
+                <p class="mt-6 text-center text-gray-600">Belum punya akun? <a href="javascript:void(0)" onclick="showSection('signup')" class="text-indigo-600 font-semibold underline">Daftar</a></p>
+            </div>
+        </section>
+
+        <section id="signup-section" class="hidden max-w-md mx-auto">
+            <div class="glass p-8 rounded-3xl shadow-xl">
+                <h2 class="text-3xl font-bold mb-6 text-center">Buat Akun Baru</h2>
+                <form id="signup-form">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Nama Pengguna</label>
+                        <input type="text" name="username" required class="w-full px-4 py-3 rounded-xl border border-gray-200">
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Alamat Email</label>
+                        <input type="email" name="email" required class="w-full px-4 py-3 rounded-xl border border-gray-200">
+                    </div>
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Kata Sandi</label>
+                        <input type="password" name="password" required class="w-full px-4 py-3 rounded-xl border border-gray-200">
+                    </div>
+                    <button type="submit" class="w-full btn-primary py-4 rounded-xl font-bold shadow-lg shadow-indigo-100 uppercase tracking-wider">Daftar</button>
+                </form>
+                <p class="mt-6 text-center text-gray-600">Sudah punya akun? <a href="javascript:void(0)" onclick="showSection('login')" class="text-indigo-600 font-semibold underline">Masuk</a></p>
+            </div>
+        </section>
+
+        <!-- Initial Setup Section -->
+        <section id="setup-section" class="hidden max-w-xl mx-auto">
+            <div class="glass p-8 rounded-3xl shadow-xl">
+                <h2 class="text-3xl font-bold mb-4">Mari persiapkan akunmu!</h2>
+                <p class="text-gray-500 mb-8">Sebelum mulai, kamu perlu membuat dompet/wallet pertama.</p>
+                <form id="setup-form">
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div class="col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Nama Dompet</label>
+                            <input type="text" name="name" placeholder="misal: Dompet Tunai" required class="w-full px-4 py-3 rounded-xl">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Tipe</label>
+                            <select name="type" class="w-full px-4 py-3 rounded-xl">
+                                <option value="cash">Tunai (Cash)</option>
+                                <option value="bank">Bank / Rekening</option>
+                                <option value="e-wallet">E-Wallet</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Saldo Awal</label>
+                            <input type="number" name="balance" value="0" step="0.01" class="w-full px-4 py-3 rounded-xl">
+                        </div>
+                    </div>
+                    <button type="submit" class="w-full btn-primary py-4 rounded-xl font-bold shadow-lg">Mulai Atur Keuangan</button>
+                </form>
+            </div>
+        </section>
+
+        <!-- Dashboard Section -->
+        <section id="dashboard-section" class="hidden">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <!-- Total Balance -->
+                <div class="glass p-6 rounded-3xl flex items-center justify-between border-l-4 border-indigo-500">
+                    <div>
+                        <p class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-1">Total Saldo</p>
+                        <h3 id="total-balance" class="text-3xl font-extrabold text-indigo-700">Rp 0</h3>
+                    </div>
+                    <div class="bg-indigo-50 p-3 rounded-2xl text-indigo-500">
+                        <i data-lucide="wallet"></i>
+                    </div>
+                </div>
+                <!-- Income Month -->
+                <div class="glass p-6 rounded-3xl flex items-center justify-between border-l-4 border-emerald-500">
+                    <div>
+                        <p class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-1">Pemasukan Bulan Ini</p>
+                        <h3 id="monthly-income" class="text-3xl font-extrabold text-emerald-600">Rp 0</h3>
+                    </div>
+                    <div class="bg-emerald-50 p-3 rounded-2xl text-emerald-500">
+                        <i data-lucide="trending-up"></i>
+                    </div>
+                </div>
+                <!-- Expense Month -->
+                <div class="glass p-6 rounded-3xl flex items-center justify-between border-l-4 border-rose-500">
+                    <div>
+                        <p class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-1">Pengeluaran Bulan Ini</p>
+                        <h3 id="monthly-expense" class="text-3xl font-extrabold text-rose-600">Rp 0</h3>
+                    </div>
+                    <div class="bg-rose-50 p-3 rounded-2xl text-rose-500">
+                        <i data-lucide="trending-down"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                <!-- Chart Area -->
+                <div class="glass p-6 rounded-3xl h-[500px] flex flex-col">
+                    <h3 class="text-xl font-bold mb-6 flex-shrink-0">Distribusi Pengeluaran</h3>
+                    <div class="flex-1 min-h-0 relative">
+                        <canvas id="spendingChart"></canvas>
+                    </div>
+                </div>
+                <!-- Recent Transactions -->
+                <div class="glass p-6 rounded-3xl flex flex-col h-[500px]">
+                    <div class="flex justify-between items-center mb-6 flex-shrink-0">
+                        <h3 class="text-xl font-bold">Transaksi Terakhir</h3>
+                        <button onclick="showSection('transactions')" class="text-indigo-600 font-semibold text-sm hover:underline">Lihat Semua</button>
+                    </div>
+                    <div id="recent-transactions-list" class="space-y-4 overflow-y-auto pr-2 custom-scrollbar flex-1">
+                        <!-- Items rendered via JS -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- Budgets -->
+                <div class="glass p-6 rounded-3xl flex flex-col h-[400px]">
+                    <div class="flex justify-between items-center mb-6 flex-shrink-0">
+                        <h3 class="text-xl font-bold">Anggaran</h3>
+                        <button onclick="showSection('budgets')" class="text-indigo-600 font-semibold text-sm hover:underline">Kelola</button>
+                    </div>
+                    <div id="dashboard-budgets" class="space-y-6 overflow-y-auto pr-2 custom-scrollbar flex-1">
+                        <!-- Items rendered via JS -->
+                    </div>
+                </div>
+                <!-- Financial Goals -->
+                <div class="glass p-6 rounded-3xl flex flex-col h-[400px]">
+                    <div class="flex justify-between items-center mb-6 flex-shrink-0">
+                        <h3 class="text-xl font-bold">Tabungan & Target</h3>
+                        <button onclick="showSection('goals')" class="text-indigo-600 font-semibold text-sm hover:underline">Kelola</button>
+                    </div>
+                    <div id="dashboard-goals" class="space-y-6 overflow-y-auto pr-2 custom-scrollbar flex-1">
+                        <!-- Items rendered via JS -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Transactions Section -->
+        <section id="transactions-section" class="hidden">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+                <h2 class="text-3xl font-extrabold tracking-tight">Riwayat Transaksi</h2>
+                <div class="flex flex-wrap items-center gap-2">
+                    <select id="filter-month" class="glass px-4 py-2 rounded-xl border-white/20 bg-white/10 outline-none font-bold text-sm text-gray-700">
+                        <option value="">Semua Bulan</option>
+                        <option value="1">Januari</option>
+                        <option value="2">Februari</option>
+                        <option value="3">Maret</option>
+                        <option value="4">April</option>
+                        <option value="5">Mei</option>
+                        <option value="6">Juni</option>
+                        <option value="7">Juli</option>
+                        <option value="8">Agustus</option>
+                        <option value="9">September</option>
+                        <option value="10">Oktober</option>
+                        <option value="11">November</option>
+                        <option value="12">Desember</option>
+                    </select>
+                    <select id="filter-year" class="glass px-4 py-2 rounded-xl border-white/20 bg-white/10 outline-none font-bold text-sm text-gray-700">
+                        <option value="">Semua Tahun</option>
+                        <option value="2026">2026</option>
+                        <option value="2025">2025</option>
+                        <option value="2024">2024</option>
+                    </select>
+                    <button onclick="updateTransactions()" class="p-2 bg-indigo-500 text-white rounded-xl hover:bg-indigo-600 transition-colors shadow-lg shadow-indigo-200">
+                        <i data-lucide="filter" class="w-4 h-4"></i>
+                    </button>
+                    <div class="h-8 w-[1px] bg-gray-200 mx-2 hidden md:block"></div>
+                    <button onclick="exportTransactions()" class="glass flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold border-white/50 hover:bg-white/80 transition-all text-sm text-gray-600">
+                        <i data-lucide="download" class="w-4 h-4"></i>
+                        Ekspor
+                    </button>
+                    <button onclick="openTransactionModal()" class="btn-primary flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold shadow-lg text-sm">
+                        <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                        Transaksi
+                    </button>
+                </div>
+            </div>
+            
+            <div class="glass rounded-3xl overflow-x-auto">
+                <table class="w-full text-left whitespace-nowrap">
+                    <thead class="bg-white/30 border-b border-white/20">
+                        <tr>
+                            <th class="px-6 py-4 font-bold text-gray-600">Tanggal</th>
+                            <th class="px-6 py-4 font-bold text-gray-600">Catatan</th>
+                            <th class="px-6 py-4 font-bold text-gray-600">Kategori</th>
+                            <th class="px-6 py-4 font-bold text-gray-600">Dompet</th>
+                            <th class="px-6 py-4 font-bold text-gray-600">Nominal</th>
+                        </tr>
+                    </thead>
+                    <tbody id="transactions-table-body" class="divide-y divide-white/10">
+                        <!-- Rows rendered via JS -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Budgets Section -->
+        <section id="budgets-section" class="hidden">
+            <div class="flex justify-between items-center mb-8">
+                <h2 class="text-3xl font-extrabold tracking-tight">Anggaran Bulanan</h2>
+                <button onclick="openBudgetModal()" class="btn-primary flex items-center gap-2 px-6 py-3 rounded-2xl font-bold shadow-lg">
+                    <i data-lucide="plus-circle" class="w-5 h-5"></i>
+                    Atur Anggaran
+                </button>
+            </div>
+            <div id="budgets-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Cards rendered via JS -->
+            </div>
+        </section>
+
+        <!-- Goals Section -->
+        <section id="goals-section" class="hidden">
+            <div class="flex justify-between items-center mb-8">
+                <h2 class="text-3xl font-extrabold tracking-tight">Target Tabungan</h2>
+                <button onclick="openGoalModal()" class="btn-primary flex items-center gap-2 px-6 py-3 rounded-2xl font-bold shadow-lg">
+                    <i data-lucide="plus-circle" class="w-5 h-5"></i>
+                    Buat Target
+                </button>
+            </div>
+            <div id="goals-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Cards rendered via JS -->
+            </div>
+        </section>
+
+        <!-- Transaction Modal -->
+        <div id="transaction-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-white/20 backdrop-blur-sm p-4">
+            <div class="glass p-8 rounded-3xl w-full max-w-lg shadow-2xl relative">
+                <button onclick="closeTransactionModal()" class="absolute top-6 right-6 text-gray-400 hover:text-gray-600">
+                    <i data-lucide="x"></i>
+                </button>
+                <h3 class="text-2xl font-bold mb-6">Tambah Transaksi</h3>
+                <form id="transaction-form">
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div class="col-span-2">
+                             <label class="block text-sm font-medium text-gray-700 mb-1">Tipe</label>
+                             <div class="flex bg-gray-100/50 p-1 rounded-xl">
+                                <button type="button" onclick="setTransactionType('expense')" id="type-expense" class="flex-1 py-2 rounded-lg font-bold transition-all bg-white shadow-sm ring-1 ring-black/5 text-rose-600">Pengeluaran</button>
+                                <button type="button" onclick="setTransactionType('income')" id="type-income" class="flex-1 py-2 rounded-lg font-bold transition-all text-gray-500">Pemasukan</button>
+                                <button type="button" onclick="setTransactionType('transfer')" id="type-transfer" class="flex-1 py-2 rounded-lg font-bold transition-all text-gray-500">Transfer</button>
+                             </div>
+                             <input type="hidden" name="type" id="hidden-type" value="expense">
+                        </div>
+                        <div class="col-span-2">
+                             <label class="block text-sm font-medium text-gray-700 mb-1">Nominal</label>
+                            <input type="number" name="amount" required step="0.01" class="w-full px-4 py-3 rounded-xl border border-gray-200">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Dompet</label>
+                            <select name="account_id" id="account-select" required class="w-full px-4 py-3 rounded-xl border border-gray-200"></select>
+                        </div>
+                        <div id="to-account-container" class="hidden">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Ke Dompet</label>
+                            <select name="to_account_id" id="to-account-select" class="w-full px-4 py-3 rounded-xl border border-gray-200"></select>
+                        </div>
+                        <div id="category-container">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Kategori</label>
+                            <select name="category_id" id="category-select" class="w-full px-4 py-3 rounded-xl border border-gray-200"></select>
+                        </div>
+                        <div class="col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Tanggal</label>
+                            <input type="date" name="date" required class="w-full px-4 py-3 rounded-xl border border-gray-200">
+                        </div>
+                        <div class="col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Catatan</label>
+                            <textarea name="notes" class="w-full px-4 py-3 rounded-xl border border-gray-200" rows="2"></textarea>
+                        </div>
+                    </div>
+                    <button type="submit" class="w-full btn-primary py-4 rounded-xl font-bold shadow-lg">Simpan Transaksi</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Budget Modal -->
+        <div id="budget-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-white/20 backdrop-blur-sm p-4">
+            <div class="glass p-8 rounded-3xl w-full max-w-md shadow-2xl relative">
+                <button onclick="closeBudgetModal()" class="absolute top-6 right-6 text-gray-400 hover:text-gray-600"><i data-lucide="x"></i></button>
+                <h3 class="text-2xl font-bold mb-6">Atur Anggaran</h3>
+                <form id="budget-form">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Kategori</label>
+                        <select name="category_id" id="budget-category-select" required class="w-full px-4 py-3 rounded-xl border border-gray-200"></select>
+                    </div>
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Batas Bulanan</label>
+                        <input type="number" name="limit_amount" required class="w-full px-4 py-3 rounded-xl border border-gray-200">
+                    </div>
+                    <input type="hidden" name="month" id="budget-month">
+                    <input type="hidden" name="year" id="budget-year">
+                    <button type="submit" class="w-full btn-primary py-4 rounded-xl font-bold shadow-lg">Simpan Anggaran</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Goal Modal -->
+        <div id="goal-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-white/20 backdrop-blur-sm p-4">
+            <div class="glass p-8 rounded-3xl w-full max-w-md shadow-2xl relative">
+                <button onclick="closeGoalModal()" class="absolute top-6 right-6 text-gray-400 hover:text-gray-600"><i data-lucide="x"></i></button>
+                <h3 class="text-2xl font-bold mb-6">Target Tabungan</h3>
+                <form id="goal-form">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Nama Target</label>
+                        <input type="text" name="name" placeholder="misal: Beli Laptop Baru" required class="w-full px-4 py-3 rounded-xl border border-gray-200">
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Nominal Target</label>
+                        <input type="number" name="target_amount" required class="w-full px-4 py-3 rounded-xl border border-gray-200">
+                    </div>
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Tenggat Waktu (Opsional)</label>
+                        <input type="date" name="deadline" class="w-full px-4 py-3 rounded-xl border border-gray-200">
+                    </div>
+                    <button type="submit" class="w-full btn-primary py-4 rounded-xl font-bold shadow-lg">Buat Target</button>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // State Management
+        let user = JSON.parse(localStorage.getItem('glowfinance_user'));
+        let token = localStorage.getItem('glowfinance_token');
+        let currentSection = 'landing';
+        let categories = [];
+        let accounts = [];
+
+        // App Initialization
+        window.onload = () => {
+            lucide.createIcons();
+            if (token) {
+                showSection('dashboard');
+                initApp();
+            } else {
+                showSection('landing');
+            }
+        };
+
+        // Toast Helper
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const icons = {
+                success: 'check-circle',
+                error: 'alert-circle',
+                warning: 'alert-triangle',
+                info: 'info'
+            };
+            const colors = {
+                success: 'text-emerald-600 border-emerald-200 bg-emerald-50/90',
+                error: 'text-rose-600 border-rose-200 bg-rose-50/90',
+                warning: 'text-amber-600 border-amber-200 bg-amber-50/90',
+                info: 'text-indigo-600 border-indigo-200 bg-indigo-50/90'
+            };
+            
+            toast.className = `toast glass p-4 rounded-2xl border flex items-center gap-3 shadow-xl min-w-[300px] pointer-events-auto ${colors[type]}`;
+            toast.innerHTML = `
+                <i data-lucide="${icons[type]}" class="w-5 h-5"></i>
+                <span class="font-bold text-sm">${message}</span>
+            `;
+            
+            container.appendChild(toast);
+            lucide.createIcons();
+            
+            setTimeout(() => {
+                toast.classList.add('hiding');
+                setTimeout(() => toast.remove(), 500);
+            }, 3000);
+        }
+
+        async function checkBudgetExceeded(categoryId) {
+            const month = new Date().getMonth() + 1;
+            const year = new Date().getFullYear();
+            const res = await fetch(`/api/budgets?month=${month}&year=${year}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const budgets = await res.json();
+            const budget = budgets.find(b => b.category_id == categoryId);
+            if (budget && parseFloat(budget.spent) > parseFloat(budget.limit_amount)) {
+                showToast(`Peringatan: Pengeluaran ${budget.category_name} melampaui anggaran!`, 'warning');
+            }
+        }
+
+        // Routing Logic
+        function showSection(section) {
+            console.log('Switching to section:', section);
+            if (section === currentSection && !document.getElementById(`${section}-section`).classList.contains('hidden')) {
+                console.log('Already in section, skipping re-render');
+                return;
+            }
+            currentSection = section;
+            const sections = ['landing', 'login', 'signup', 'setup', 'dashboard', 'transactions', 'budgets', 'goals'];
+            sections.forEach(s => {
+                document.getElementById(`${s}-section`).classList.add('hidden');
+            });
+            document.getElementById(`${section}-section`).classList.remove('hidden');
+            
+            const navbar = document.getElementById('navbar');
+            const mobileNav = document.getElementById('mobile-nav');
+            if (['landing', 'login', 'signup', 'setup'].includes(section)) {
+                navbar.classList.add('hidden');
+                mobileNav.classList.add('hidden');
+            } else {
+                navbar.classList.remove('hidden');
+                mobileNav.classList.remove('hidden');
+                refreshData();
+            }
+            lucide.createIcons();
+        }
+
+        async function initApp() {
+            await fetchCategories();
+            await fetchAccounts();
+        }
+
+        async function refreshData() {
+            if (!token) return;
+            switch(currentSection) {
+                case 'dashboard':
+                    await updateDashboard();
+                    break;
+                case 'transactions':
+                    await updateTransactions();
+                    break;
+                case 'budgets':
+                    await updateBudgets();
+                    break;
+                case 'goals':
+                    await updateGoals();
+                    break;
+            }
+        }
+
+        // Auth Logic
+        document.getElementById('signup-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const data = Object.fromEntries(new FormData(e.target));
+            const res = await fetch('/api/signup', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            if (res.ok) {
+                showToast('Akun berhasil dibuat! Silakan masuk.');
+                showSection('login');
+            }
+        };
+
+        document.getElementById('login-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const data = Object.fromEntries(new FormData(e.target));
+            const res = await fetch('/api/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            const result = await res.json();
+            if (res.ok) {
+                localStorage.setItem('glowfinance_token', result.token);
+                localStorage.setItem('glowfinance_user', JSON.stringify(result.user));
+                token = result.token;
+                user = result.user;
+                
+                // Check if has accounts
+                const accRes = await fetch('/api/accounts', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const accs = await accRes.json();
+                if (accs.length === 0) {
+                    showSection('setup');
+                } else {
+                    showSection('dashboard');
+                    initApp();
+                }
+            } else {
+                showToast(result.error || 'Gagal masuk', 'error');
+            }
+        };
+
+        document.getElementById('setup-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const data = Object.fromEntries(new FormData(e.target));
+            const res = await fetch('/api/accounts', {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}` 
+                },
+                body: JSON.stringify(data)
+            });
+            if (res.ok) {
+                showSection('dashboard');
+                initApp();
+            }
+        };
+
+        function logout() {
+            localStorage.removeItem('glowfinance_token');
+            localStorage.removeItem('glowfinance_user');
+            token = null;
+            user = null;
+            showSection('landing');
+        }
+
+        // Data Fetching
+        async function fetchCategories() {
+            const res = await fetch('/api/categories', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            categories = await res.json();
+            populateSelects();
+        }
+
+        async function fetchAccounts() {
+            const res = await fetch('/api/accounts', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            accounts = await res.json();
+            populateSelects();
+        }
+
+        function populateSelects() {
+            const accSelect = document.getElementById('account-select');
+            const toAccSelect = document.getElementById('to-account-select');
+            const catSelect = document.getElementById('category-select');
+            const budgetCatSelect = document.getElementById('budget-category-select');
+
+            accSelect.innerHTML = accounts.map(a => `<option value="${a.id}">${a.name} (${formatIDR(a.balance)})</option>`).join('');
+            toAccSelect.innerHTML = accounts.map(a => `<option value="${a.id}">${a.name}</option>`).join('');
+            catSelect.innerHTML = categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+            budgetCatSelect.innerHTML = categories.filter(c => c.type === 'expense').map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+        }
+
+        // Dashboard Logic
+        async function updateDashboard() {
+            const accRes = await fetch('/api/accounts', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const accs = await accRes.json();
+            const total = accs.reduce((sum, a) => sum + parseFloat(a.balance), 0);
+            document.getElementById('total-balance').innerText = formatIDR(total);
+
+            const transRes = await fetch('/api/transactions', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const trans = await transRes.json();
+            
+            // Monthly stats
+            const now = new Date();
+            const thisMonth = trans.filter(t => {
+                const d = new Date(t.date);
+                return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+            });
+            const income = thisMonth.filter(t => t.type === 'income').reduce((sum, t) => sum + parseFloat(t.amount), 0);
+            const expense = thisMonth.filter(t => t.type === 'expense').reduce((sum, t) => sum + parseFloat(t.amount), 0);
+            
+            document.getElementById('monthly-income').innerText = formatIDR(income);
+            document.getElementById('monthly-expense').innerText = formatIDR(expense);
+
+            // Recent Transactions
+            const list = document.getElementById('recent-transactions-list');
+            list.innerHTML = trans.slice(0, 5).map(t => `
+                <div class="flex items-center justify-between p-4 glass-card rounded-2xl">
+                    <div class="flex items-center gap-4">
+                        <div class="p-2 rounded-xl bg-white/50 text-${t.type === 'income' ? 'emerald' : t.type === 'expense' ? 'rose' : 'indigo'}-500">
+                             <i data-lucide="${t.type === 'income' ? 'trending-up' : t.type === 'expense' ? 'trending-down' : 'repeat'}"></i>
+                        </div>
+                        <div>
+                            <p class="font-bold text-gray-800">${t.notes || t.category_name || 'Transaksi'}</p>
+                            <p class="text-xs text-gray-400 font-medium">${new Date(t.date).toLocaleDateString('id-ID')}</p>
+                        </div>
+                    </div>
+                    <p class="font-extrabold text-${t.type === 'income' ? 'emerald' : t.type === 'expense' ? 'rose' : 'indigo'}-600">
+                        ${t.type === 'expense' ? '-' : t.type === 'income' ? '+' : ''}${formatIDR(t.amount)}
+                    </p>
+                </div>
+            `).join('');
+            lucide.createIcons();
+
+            // Charts
+            renderChart(thisMonth);
+
+            // Budgets & Goals Preview
+            updateDashboardBudgets();
+            updateDashboardGoals();
+        }
+
+        async function updateDashboardBudgets() {
+            const month = new Date().getMonth() + 1;
+            const year = new Date().getFullYear();
+            const res = await fetch(`/api/budgets?month=${month}&year=${year}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const budgets = await res.json();
+            const container = document.getElementById('dashboard-budgets');
+            container.innerHTML = budgets.map(b => {
+                const spent = parseFloat(b.spent || 0);
+                const limit = parseFloat(b.limit_amount);
+                const percent = Math.min((spent / limit) * 100, 100);
+                const color = percent > 90 ? 'rose' : percent > 70 ? 'amber' : 'emerald';
+                return `
+                    <div>
+                        <div class="flex justify-between mb-2">
+                            <span class="font-bold text-gray-700">${b.category_name}</span>
+                            <span class="text-sm font-medium text-gray-500">${formatIDR(spent)} / ${formatIDR(limit)}</span>
+                        </div>
+                        <div class="w-full bg-gray-100 rounded-full h-2.5">
+                            <div class="bg-${color}-500 h-2.5 rounded-full" style="width: ${percent}%"></div>
+                        </div>
+                    </div>
+                `;
+            }).join('') || '<p class="text-gray-400 text-center py-8">Belum ada anggaran bulan ini.</p>';
+        }
+
+        async function updateDashboardGoals() {
+            const res = await fetch('/api/goals', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const goals = await res.json();
+            const container = document.getElementById('dashboard-goals');
+            container.innerHTML = goals.slice(0, 3).map(g => {
+                const current = parseFloat(g.current_amount);
+                const target = parseFloat(g.target_amount);
+                const percent = Math.min((current / target) * 100, 100);
+                return `
+                    <div>
+                        <div class="flex justify-between mb-2">
+                            <span class="font-bold text-gray-700">${g.name}</span>
+                            <span class="text-sm font-medium text-gray-500">${formatIDR(current)} / ${formatIDR(target)}</span>
+                        </div>
+                        <div class="w-full bg-gray-100 rounded-full h-2.5">
+                            <div class="bg-indigo-500 h-2.5 rounded-full" style="width: ${percent}%"></div>
+                        </div>
+                    </div>
+                `;
+            }).join('') || '<p class="text-gray-400 text-center py-8">Belum ada target tabungan.</p>';
+        }
+
+        // Chart Rendering
+        let spendingChartInstance = null;
+        function renderChart(transactions) {
+            const ctx = document.getElementById('spendingChart').getContext('2d');
+            const data = {};
+            transactions.filter(t => t.type === 'expense').forEach(t => {
+                const name = t.category_name || 'Others';
+                data[name] = (data[name] || 0) + parseFloat(t.amount);
+            });
+
+            if (spendingChartInstance) spendingChartInstance.destroy();
+            
+            spendingChartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(data),
+                    datasets: [{
+                        data: Object.values(data),
+                        backgroundColor: [
+                            '#6366f1', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#8b5cf6', '#3b82f6'
+                        ],
+                        borderWidth: 0,
+                        hoverOffset: 15
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    },
+                    cutout: '70%'
+                }
+            });
+        }
+
+        // Transactions List View
+        async function updateTransactions() {
+            const month = document.getElementById('filter-month').value;
+            const year = document.getElementById('filter-year').value;
+            const url = `/api/transactions?month=${month}&year=${year}`;
+            
+            const res = await fetch(url, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const trans = await res.json();
+            const body = document.getElementById('transactions-table-body');
+            body.innerHTML = trans.map(t => `
+                <tr class="hover:bg-white/40 transition-colors">
+                    <td class="px-6 py-4 text-gray-500 font-medium">${new Date(t.date).toLocaleDateString('id-ID')}</td>
+                    <td class="px-6 py-4 font-bold text-gray-800 break-all min-w-[150px]">${t.notes || '-'}</td>
+                    <td class="px-6 py-4">
+                        <span class="px-3 py-1 bg-indigo-50 text-indigo-600 rounded-full text-xs font-bold uppercase tracking-wider">${t.category_name || '-'}</span>
+                    </td>
+                    <td class="px-6 py-4 font-medium text-gray-600 font-bold">${t.account_name}</td>
+                    <td class="px-6 py-4 font-extrabold text-${t.type === 'income' ? 'emerald' : t.type === 'expense' ? 'rose' : 'indigo'}-600">
+                        ${t.type === 'expense' ? '-' : t.type === 'income' ? '+' : ''}${formatIDR(t.amount)}
+                    </td>
+                </tr>
+            `).join('') || `<tr><td colspan="5" class="text-center py-12 text-gray-400 font-medium italic">Tidak ada transaksi pada periode ini.</td></tr>`;
+        }
+
+        async function exportTransactions() {
+            const month = document.getElementById('filter-month').value;
+            const year = document.getElementById('filter-year').value;
+            const url = `/api/transactions/export?month=${month}&year=${year}`;
+            
+            showToast('Menyiapkan file ekspor...', 'info');
+            const res = await fetch(url, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+                const blob = await res.blob();
+                const urlObj = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = urlObj;
+                a.download = `glowfinance_transaksi_${year || 'all'}_${month || 'all'}.csv`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                window.URL.revokeObjectURL(urlObj);
+                showToast('File berhasil diunduh!');
+            } else {
+                showToast('Gagal mengekspor data', 'error');
+            }
+        }
+
+        // Budgets List View
+        async function updateBudgets() {
+            const month = new Date().getMonth() + 1;
+            const year = new Date().getFullYear();
+            const res = await fetch(`/api/budgets?month=${month}&year=${year}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const budgets = await res.json();
+            const container = document.getElementById('budgets-list');
+            container.innerHTML = budgets.map(b => {
+                 const spent = parseFloat(b.spent || 0);
+                 const limit = parseFloat(b.limit_amount);
+                 const percent = Math.min((spent / limit) * 100, 100);
+                 const color = percent > 90 ? 'rose' : percent > 70 ? 'amber' : 'emerald';
+                 return `
+                    <div class="glass p-6 rounded-3xl">
+                        <h4 class="text-xl font-bold mb-2">${b.category_name}</h4>
+                        <div class="flex justify-between items-end mb-4">
+                            <div>
+                                <p class="text-xs text-gray-400 font-bold uppercase">Terpakai</p>
+                                <p class="text-lg font-extrabold text-${color}-600">${formatIDR(spent)}</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-xs text-gray-400 font-bold uppercase">Batas</p>
+                                <p class="text-lg font-bold">${formatIDR(limit)}</p>
+                            </div>
+                        </div>
+                        <div class="w-full bg-gray-100 rounded-full h-3 mb-2">
+                            <div class="bg-${color}-500 h-3 rounded-full" style="width: ${percent}%"></div>
+                        </div>
+                        <p class="text-xs text-gray-500 font-medium">${percent.toFixed(1)}% anggaran terpakai</p>
+                    </div>
+                 `;
+            }).join('');
+        }
+
+        // Goals List View
+        async function updateGoals() {
+            const res = await fetch('/api/goals', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const goals = await res.json();
+            const container = document.getElementById('goals-list');
+            container.innerHTML = goals.map(g => {
+                 const current = parseFloat(g.current_amount);
+                 const target = parseFloat(g.target_amount);
+                 const percent = Math.min((current / target) * 100, 100);
+                 return `
+                    <div class="glass p-6 rounded-3xl">
+                        <div class="flex justify-between items-start mb-4">
+                            <h4 class="text-xl font-bold">${g.name}</h4>
+                            <span class="px-2 py-1 ${g.status === 'achieved' ? 'bg-emerald-50 text-emerald-600' : 'bg-indigo-50 text-indigo-600'} rounded-lg text-[10px] font-black uppercase">${g.status === 'achieved' ? 'Tercapai' : 'Aktif'}</span>
+                        </div>
+                        <div class="flex justify-between items-end mb-4">
+                            <div>
+                                <p class="text-xs text-gray-400 font-bold uppercase">Terkumpul</p>
+                                <p class="text-xl font-extrabold text-indigo-600">${formatIDR(current)}</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-xs text-gray-400 font-bold uppercase">Target</p>
+                                <p class="text-lg font-bold">${formatIDR(target)}</p>
+                            </div>
+                        </div>
+                        <div class="w-full bg-gray-100 rounded-full h-3 mb-4">
+                            <div class="bg-indigo-500 h-3 rounded-full" style="width: ${percent}%"></div>
+                        </div>
+                        <div class="flex gap-2">
+                             <input type="number" id="contribute-${g.id}" placeholder="Jumlah" class="flex-1 px-3 py-2 rounded-xl text-sm">
+                             <button onclick="addGoalContribution(${g.id})" class="btn-primary px-4 py-2 rounded-xl text-sm font-bold">Tambah</button>
+                        </div>
+                        ${g.deadline ? `<p class="mt-4 text-[10px] text-gray-400 font-bold uppercase tracking-widest text-center">Tenggat: ${new Date(g.deadline).toLocaleDateString('id-ID')}</p>` : ''}
+                    </div>
+                 `;
+            }).join('');
+        }
+
+        async function addGoalContribution(id) {
+            const amount = document.getElementById(`contribute-${id}`).value;
+            if (!amount) return;
+            await fetch('/api/goals/contribute', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ id, amount })
+            });
+            updateGoals();
+            updateDashboard();
+            showToast('Kontribusi berhasil ditambahkan!');
+        }
+
+        // Modals Logic
+        function openTransactionModal() {
+            document.getElementById('transaction-modal').classList.remove('hidden');
+            document.querySelector('#transaction-form [name="date"]').valueAsDate = new Date();
+        }
+        function closeTransactionModal() { document.getElementById('transaction-modal').classList.add('hidden'); }
+        
+        function setTransactionType(type) {
+            document.getElementById('hidden-type').value = type;
+            const btnExpense = document.getElementById('type-expense');
+            const btnIncome = document.getElementById('type-income');
+            const btnTransfer = document.getElementById('type-transfer');
+            
+            [btnExpense, btnIncome, btnTransfer].forEach(b => {
+                b.classList.remove('bg-white', 'shadow-sm', 'ring-1', 'ring-black/5', 'text-rose-600', 'text-emerald-600', 'text-indigo-600');
+                b.classList.add('text-gray-500');
+            });
+            
+            const btn = document.getElementById(`type-${type}`);
+            btn.classList.add('bg-white', 'shadow-sm', 'ring-1', 'ring-black/5');
+            btn.classList.remove('text-gray-500');
+            btn.classList.add(`text-${type === 'expense' ? 'rose' : type === 'income' ? 'emerald' : 'indigo'}-600`);
+            
+            document.getElementById('to-account-container').classList.toggle('hidden', type !== 'transfer');
+            document.getElementById('category-container').classList.toggle('hidden', type === 'transfer');
+        }
+
+        document.getElementById('transaction-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const data = Object.fromEntries(new FormData(e.target));
+            const res = await fetch('/api/transactions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify(data)
+            });
+            if (res.ok) {
+                closeTransactionModal();
+                refreshData();
+                fetchAccounts();
+                showToast('Transaksi berhasil disimpan!');
+                if (data.type === 'expense') checkBudgetExceeded(data.category_id);
+            }
+        };
+
+        function openBudgetModal() {
+            document.getElementById('budget-modal').classList.remove('hidden');
+            document.getElementById('budget-month').value = new Date().getMonth() + 1;
+            document.getElementById('budget-year').value = new Date().getFullYear();
+        }
+        function closeBudgetModal() { document.getElementById('budget-modal').classList.add('hidden'); }
+
+        document.getElementById('budget-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const data = Object.fromEntries(new FormData(e.target));
+            const res = await fetch('/api/budgets', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify(data)
+            });
+            if (res.ok) {
+                closeBudgetModal();
+                updateBudgets();
+                showToast('Anggaran berhasil diperbarui!');
+            }
+        };
+
+        function openGoalModal() { document.getElementById('goal-modal').classList.remove('hidden'); }
+        function closeGoalModal() { document.getElementById('goal-modal').classList.add('hidden'); }
+
+        document.getElementById('goal-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const data = Object.fromEntries(new FormData(e.target));
+            const res = await fetch('/api/goals', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify(data)
+            });
+            if (res.ok) {
+                closeGoalModal();
+                updateGoals();
+                showToast('Target tabungan berhasil dibuat!');
+            }
+        };
+
+        // Helpers
+        function formatIDR(amount) {
+            if (isNaN(amount)) return 'Rp 0';
+            return 'Rp ' + parseFloat(amount).toLocaleString('id-ID');
+        }
+    </script>
+</body>
+</html>

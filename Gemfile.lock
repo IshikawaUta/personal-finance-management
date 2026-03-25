@@ -1,0 +1,52 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    base64 (0.3.0)
+    bcrypt (3.1.22)
+    bigdecimal (4.0.1)
+    dotenv (3.2.0)
+    eksa-server (1.1.1)
+      logger (~> 1.6)
+      nio4r (~> 2.0)
+      rack (~> 3.0)
+      rackup (~> 2.0)
+    json (2.19.3)
+    jwt (3.1.2)
+      base64
+    logger (1.7.0)
+    mysql2 (0.5.7)
+      bigdecimal
+    nio4r (2.7.5)
+    rack (3.2.5)
+    rackup (2.3.1)
+      rack (>= 3)
+
+PLATFORMS
+  ruby
+  x86_64-linux-gnu
+
+DEPENDENCIES
+  bcrypt
+  dotenv
+  eksa-server
+  json
+  jwt
+  mysql2
+  rack
+
+CHECKSUMS
+  base64 (0.3.0) sha256=27337aeabad6ffae05c265c450490628ef3ebd4b67be58257393227588f5a97b
+  bcrypt (3.1.22) sha256=1f0072e88c2d705d94aff7f2c5cb02eb3f1ec4b8368671e19112527489f29032
+  bigdecimal (4.0.1) sha256=8b07d3d065a9f921c80ceaea7c9d4ae596697295b584c296fe599dd0ad01c4a7
+  dotenv (3.2.0) sha256=e375b83121ea7ca4ce20f214740076129ab8514cd81378161f11c03853fe619d
+  eksa-server (1.1.1) sha256=bb7889601ae16e332ade1fa8deb3484558df798d125b4f998ae16280b51ada05
+  json (2.19.3) sha256=289b0bb53052a1fa8c34ab33cc750b659ba14a5c45f3fcf4b18762dc67c78646
+  jwt (3.1.2) sha256=af6991f19a6bb4060d618d9add7a66f0eeb005ac0bc017cd01f63b42e122d535
+  logger (1.7.0) sha256=196edec7cc44b66cfb40f9755ce11b392f21f7967696af15d274dde7edff0203
+  mysql2 (0.5.7) sha256=ba09ede515a0ae8a7192040a1b778c0fb0f025fa5877e9be895cd325fa5e9d7b
+  nio4r (2.7.5) sha256=6c90168e48fb5f8e768419c93abb94ba2b892a1d0602cb06eef16d8b7df1dca1
+  rack (3.2.5) sha256=4cbd0974c0b79f7a139b4812004a62e4c60b145cba76422e288ee670601ed6d3
+  rackup (2.3.1) sha256=6c79c26753778e90983761d677a48937ee3192b3ffef6bc963c0950f94688868
+
+BUNDLED WITH
+  4.0.4

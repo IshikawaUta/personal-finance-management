@@ -1,0 +1,14 @@
+.env
+*.log
+tmp/
+.bundle/
+vendor/bundle/
+.DS_Store
+*.swp
+.sass-cache/
+.byebug_history
+node_modules/
+dist/
+coverage/
+doc/
+rdoc/
