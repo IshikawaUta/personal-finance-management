@@ -4,6 +4,7 @@ GEM
     base64 (0.3.0)
     bcrypt (3.1.22)
     bigdecimal (4.0.1)
+    csv (3.3.5)
     dotenv (3.2.0)
     eksa-server (1.1.1)
       logger (~> 1.6)
@@ -27,6 +28,7 @@ PLATFORMS
 
 DEPENDENCIES
   bcrypt
+  csv
   dotenv
   eksa-server
   json
@@ -38,6 +40,7 @@ CHECKSUMS
   base64 (0.3.0) sha256=27337aeabad6ffae05c265c450490628ef3ebd4b67be58257393227588f5a97b
   bcrypt (3.1.22) sha256=1f0072e88c2d705d94aff7f2c5cb02eb3f1ec4b8368671e19112527489f29032
   bigdecimal (4.0.1) sha256=8b07d3d065a9f921c80ceaea7c9d4ae596697295b584c296fe599dd0ad01c4a7
+  csv (3.3.5) sha256=6e5134ac3383ef728b7f02725d9872934f523cb40b961479f69cf3afa6c8e73f
   dotenv (3.2.0) sha256=e375b83121ea7ca4ce20f214740076129ab8514cd81378161f11c03853fe619d
   eksa-server (1.1.1) sha256=bb7889601ae16e332ade1fa8deb3484558df798d125b4f998ae16280b51ada05
   json (2.19.3) sha256=289b0bb53052a1fa8c34ab33cc750b659ba14a5c45f3fcf4b18762dc67c78646
