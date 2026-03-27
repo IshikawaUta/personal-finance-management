@@ -1133,9 +1133,10 @@
             const res = await fetch(url, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
-            const trans = await res.json();
+            const transactions = await res.json();
+            console.log('DEBUG LAST TRANSACTIONS:', transactions.map(t => ({ id: t.id, cat_id: t.category_id, name: t.category_name, type: t.type })));
             const body = document.getElementById('transactions-table-body');
-            body.innerHTML = trans.map(t => `
+            body.innerHTML = transactions.map(t => `
                 <tr class="hover:bg-white/40 transition-colors">
                     <td class="px-6 py-4 text-gray-500 font-medium">${new Date(t.date).toLocaleDateString('id-ID')}</td>
                     <td class="px-6 py-4 font-bold text-gray-800 break-all min-w-[150px]">${t.notes || '-'}</td>

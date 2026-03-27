@@ -6,11 +6,12 @@ class Budget < BaseModel
            (SELECT IFNULL(SUM(t.amount), 0) FROM transactions t 
             WHERE t.category_id = b.category_id AND t.user_id = b.user_id 
             AND t.type = 'expense' 
-            AND CAST(MONTH(t.date) AS UNSIGNED) = b.`month` 
-            AND CAST(YEAR(t.date) AS UNSIGNED) = b.`year`) as spent 
+            AND MONTH(t.date) = ? 
+            AND YEAR(t.date) = ?) as spent 
            FROM budgets b 
            JOIN categories c ON b.category_id = c.id 
-           WHERE b.user_id = ? AND b.`month` = ? AND b.`year` = ?", [user_id.to_i, month.to_i, year.to_i]).to_a
+           WHERE b.user_id = ? AND b.`month` = ? AND b.`year` = ?", 
+           [month.to_i, year.to_i, user_id.to_i, month.to_i, year.to_i]).to_a
   end
 
   def self.create(user_id, category_id, limit_amount, month, year)
