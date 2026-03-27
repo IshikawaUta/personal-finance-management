@@ -34,12 +34,11 @@ class Transaction < BaseModel
            WHERE t.user_id = ?"
     params = [user_id]
 
-    if month && month != ""
+    if month && month.to_i > 0
       sql += " AND MONTH(t.date) = ?"
       params << month.to_i
     end
-
-    if year && year != ""
+    if year && year.to_i > 0
       sql += " AND YEAR(t.date) = ?"
       params << year.to_i
     end

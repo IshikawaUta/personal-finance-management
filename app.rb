@@ -71,8 +71,8 @@ class App
       when '/api/transactions'
         user_id = env['current_user_id']
         if req.get?
-          month = req.params['month']
-          year = req.params['year']
+          month = (req.params['month'] && !req.params['month'].empty?) ? req.params['month'].to_i : nil
+          year = (req.params['year'] && !req.params['year'].empty?) ? req.params['year'].to_i : nil
           res.write Transaction.all_by_user(user_id, month, year).to_json
         elsif req.post?
           params = JSON.parse(req.body.read)
@@ -108,8 +108,8 @@ class App
       when '/api/budgets'
         user_id = env['current_user_id']
         if req.get?
-          month = req.params['month'] || Time.now.month
-          year = req.params['year'] || Time.now.year
+          month = (req.params['month'] && !req.params['month'].empty?) ? req.params['month'].to_i : Time.now.month
+          year = (req.params['year'] && !req.params['year'].empty?) ? req.params['year'].to_i : Time.now.year
           res.write Budget.all_by_user(user_id, month, year).to_json
         elsif req.post?
           params = JSON.parse(req.body.read)

@@ -576,8 +576,8 @@
         let user = JSON.parse(localStorage.getItem('glowfinance_user'));
         let token = localStorage.getItem('glowfinance_token');
         let currentSection = 'landing';
-        let categories = [];
         let accounts = [];
+        let isFingerprintTaskRunning = false;
 
         // App Initialization
         window.onload = () => {
@@ -690,70 +690,79 @@
         }
 
         async function toggleFingerprint() {
+            if (isFingerprintTaskRunning) return; // Cegah eksekusi ganda jika diklik cepat
+            
             const toggle = document.getElementById('fingerprint-toggle');
             const enabled = toggle.checked;
             
-            if (enabled) {
-                // Check for Secure Context (WebAuthn requires localhost or https)
-                if (!window.isSecureContext && window.location.hostname !== 'localhost') {
-                    showToast('Error: Keamanan Browser. Gunakan http://localhost:3000 agar sidik jari bisa aktif.', 'error');
-                    toggle.checked = false;
-                    return;
-                }
+            toggle.disabled = true; // Nonaktifkan UI sementara
+            isFingerprintTaskRunning = true;
 
-                if (!window.PublicKeyCredential) {
-                    showToast('Perangkat/browser tidak mendukung biometrik asli. Beralih ke mode simulasi...', 'warning');
-                    // Simpan sebagai simulasi saja
-                    await registerSimulatedFingerprint(toggle);
-                    return;
-                }
-                
-                // Warn if not HTTPS (ngrok also provides HTTP, but biometrics won't work there)
-                if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
-                    showToast('Peringatan: Gunakan HTTPS agar Sidik Jari Asli bisa aktif di ngrok!', 'warning');
-                    // Continue anyway, it will likely fall back below
-                }
+            try {
+                if (enabled) {
+                    // Check for Secure Context (WebAuthn requires localhost or https)
+                    if (!window.isSecureContext && window.location.hostname !== 'localhost') {
+                        showToast('Error: Keamanan Browser. Gunakan http://localhost:3000 agar sidik jari bisa aktif.', 'error');
+                        toggle.checked = false;
+                        return;
+                    }
 
-                try {
-                    // 1. WebAuthn Registration (Pendaftaran Sidik Jari Asli)
-                    const challenge = new Uint8Array(32);
-                    window.crypto.getRandomValues(challenge);
-                    const userID = new Uint8Array(16);
-                    window.crypto.getRandomValues(userID);
-
-                    const createOptions = {
-                        publicKey: {
-                            challenge: challenge,
-                            rp: { name: "GlowFinance", id: window.location.hostname },
-                            user: { 
-                                id: userID, 
-                                name: user.email || user.username || 'user@glowfinance.local', 
-                                displayName: user.username || 'User' 
-                            },
-                            pubKeyCredParams: [{ alg: -7, type: "public-key" }, { alg: -257, type: "public-key" }],
-                            authenticatorSelection: { 
-                                userVerification: "preferred" 
-                            },
-                            timeout: 30000,
-                            attestation: "none"
-                        }
-                    };
+                    if (!window.PublicKeyCredential) {
+                        showToast('Perangkat/browser tidak mendukung biometrik asli. Beralih ke mode simulasi...', 'warning');
+                        // Simpan sebagai simulasi saja
+                        await registerSimulatedFingerprint(toggle);
+                        return;
+                    }
                     
-                    console.log('Registering WebAuthn with options:', createOptions);
-                    const credential = await navigator.credentials.create(createOptions);
-                    const credentialId = btoa(String.fromCharCode(...new Uint8Array(credential.rawId)));
-                    
-                    await saveFingerprintToDB(true, credentialId);
-                    showToast('Kunci sidik jari asli diaktifkan 🛡️');
-                } catch (e) {
-                    console.error('WebAuthn Registration Error:', e.name, e.message);
-                    // Fallback ke simulasi jika sensor fisik gagal dipanggil
-                    showToast('Beralih ke Kunci Biometrik Software (Simulasi)...', 'warning');
-                    await registerSimulatedFingerprint(toggle);
+                    // Warn if not HTTPS
+                    if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
+                        showToast('Peringatan: Gunakan HTTPS agar Sidik Jari Asli bisa aktif!', 'warning');
+                    }
+
+                    try {
+                        // 1. WebAuthn Registration
+                        const challenge = new Uint8Array(32);
+                        window.crypto.getRandomValues(challenge);
+                        const userID = new Uint8Array(16);
+                        window.crypto.getRandomValues(userID);
+
+                        const createOptions = {
+                            publicKey: {
+                                challenge: challenge,
+                                rp: { name: "GlowFinance", id: window.location.hostname },
+                                user: { 
+                                    id: userID, 
+                                    name: user.email || user.username || 'user@glowfinance.local', 
+                                    displayName: user.username || 'User' 
+                                },
+                                pubKeyCredParams: [{ alg: -7, type: "public-key" }, { alg: -257, type: "public-key" }],
+                                authenticatorSelection: { userVerification: "preferred" },
+                                timeout: 30000,
+                                attestation: "none"
+                            }
+                        };
+                        
+                        console.log('Registering WebAuthn with options:', createOptions);
+                        const credential = await navigator.credentials.create(createOptions);
+                        const credentialId = btoa(String.fromCharCode(...new Uint8Array(credential.rawId)));
+                        
+                        await saveFingerprintToDB(true, credentialId);
+                        showToast('Kunci sidik jari asli diaktifkan 🛡️');
+                    } catch (e) {
+                        console.error('WebAuthn Registration Error:', e.name, e.message);
+                        showToast('Beralih ke Kunci Biometrik Software (Simulasi)...', 'warning');
+                        await registerSimulatedFingerprint(toggle);
+                    }
+                } else {
+                    await saveFingerprintToDB(false, null);
+                    showToast('Kunci sidik jari dinonaktifkan');
                 }
-            } else {
-                await saveFingerprintToDB(false, null);
-                showToast('Kunci sidik jari dinonaktifkan');
+            } catch (globalError) {
+                console.error('Toggle Fingerprint Error:', globalError);
+                showToast('Gagal memproses pengaturan biometrik', 'error');
+            } finally {
+                toggle.disabled = false; // Aktifkan kembali UI
+                isFingerprintTaskRunning = false;
             }
         }
 
