@@ -98,17 +98,6 @@ class App
         return res.finish
 
       # CATEGORIES API
-      when '/api/debug/check-budget'
-        user_id = env['current_user_id']
-        month = req.params['month']
-        year = req.params['year']
-        transactions = Transaction.all_by_user(user_id, month, year)
-        puts "DEBUG BUDGET - Found #{transactions.length} transactions for user #{user_id}"
-        transactions.each do |t|
-          puts "DEBUG - ID: #{t['id']}, CatID: #{t['category_id'] || 'NULL'}, Amount: #{t['amount']}, Type: #{t['type']}"
-        end
-        res.write({ status: 'debug_logged', count: transactions.length }.to_json)
-
       when '/api/categories'
         user_id = env['current_user_id']
         if req.get?

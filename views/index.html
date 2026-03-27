@@ -1043,7 +1043,6 @@
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const budgets = await res.json();
-            console.log('DEBUG BUDGET API RESPONSE:', budgets);
             const container = document.getElementById('dashboard-budgets');
             container.innerHTML = budgets.map(b => {
                 const spent = parseFloat(b.spent || 0);
@@ -1134,7 +1133,6 @@
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const transactions = await res.json();
-            console.log('DEBUG LAST TRANSACTIONS:', transactions.map(t => ({ id: t.id, cat_id: t.category_id, name: t.category_name, type: t.type })));
             const body = document.getElementById('transactions-table-body');
             body.innerHTML = transactions.map(t => `
                 <tr class="hover:bg-white/40 transition-colors">
