@@ -981,10 +981,8 @@
             
             // Monthly stats
             const now = new Date();
-            const thisMonth = trans.filter(t => {
-                const d = new Date(t.date);
-                return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-            });
+            const currentYearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+            const thisMonth = trans.filter(t => t.date && t.date.startsWith(currentYearMonth));
             const income = thisMonth.filter(t => t.type === 'income').reduce((sum, t) => sum + parseFloat(t.amount), 0);
             const expense = thisMonth.filter(t => t.type === 'expense').reduce((sum, t) => sum + parseFloat(t.amount), 0);
             
