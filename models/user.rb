@@ -21,4 +21,12 @@ class User < BaseModel
     return nil unless user
     BCrypt::Password.new(user['password_digest']) == password ? user : nil
   end
+
+  def self.update_fingerprint(user_id, enabled, credential_id = nil)
+    query("UPDATE users SET fingerprint_enabled = ?, public_key_credential_id = ? WHERE id = ?", [enabled, credential_id, user_id])
+  end
+
+  def self.find_by_credential_id(credential_id)
+    query("SELECT * FROM users WHERE public_key_credential_id = ?", [credential_id]).first
+  end
 end

@@ -41,7 +41,14 @@ class App
           user = User.authenticate(params['email'], params['password'])
           if user
             token = JWT.encode({ user_id: user['id'], exp: Time.now.to_i + 3600*24 }, ENV['JWT_SECRET'], 'HS256')
-            res.write({ token: token, user: { id: user['id'], username: user['username'] } }.to_json)
+            res.write({ 
+              token: token, 
+              user: { 
+                id: user['id'], 
+                username: user['username'],
+                fingerprint_enabled: user['fingerprint_enabled'] == 1
+              } 
+            }.to_json)
           else
             res.status = 401
             res.write({ error: 'Invalid credentials' }.to_json)
@@ -129,6 +136,19 @@ class App
           Goal.add_contribution(params['id'], params['amount'].to_f)
           res.write({ message: 'Contribution added' }.to_json)
         end
+
+      when '/api/user/profile'
+        user_id = env['current_user_id']
+        user = User.find_by_id(user_id)
+        # Jangan kirim password_digest
+        user.delete('password_digest')
+        res.write user.to_json
+
+      when '/api/user/fingerprint'
+        user_id = env['current_user_id']
+        params = JSON.parse(req.body.read)
+        User.update_fingerprint(user_id, params['enabled'], params['credential_id'])
+        res.write({ status: 'success' }.to_json)
 
       else
         res.status = 404

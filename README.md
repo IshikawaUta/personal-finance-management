@@ -3,13 +3,13 @@
 **GlowFinance** adalah aplikasi manajemen keuangan pribadi (*Personal Finance Management*) yang dirancang dengan antarmuka **Modern Glass Light** yang elegan, cepat, dan sepenuhnya responsif.
 
 ## ✨ Fitur Utama
-- 🔐 **Autentikasi Aman**: Registrasi & Login berbasis JWT.
+- 🔐 **Autentikasi Aman**: Registrasi & Login berbasis JWT + **Sidik Jari (WebAuthn)**.
 - 💳 **Multi-Dompet**: Kelola saldo Kas, Bank, dan E-Wallet secara terpisah.
 - 📈 **Pelacakan Transaksi**: Pemasukan, Pengeluaran, dan Transfer otomatis antar dompet.
+- 🛡️ **Smart Biometric Lock**: Verifikasi sensor fisik atau pengunci software cerdas saat login.
 - 📊 **Budget & Goals**: Pantau batas anggaran bulanan dan target tabungan dengan visualisasi menarik.
-- 📱 **Mobile Ready**: Navigasi bawah (Bottom Nav) yang nyaman untuk penggunaan di smartphone.
+- 📱 **Mobile Ready**: Navigasi intuitif untuk layar smartphone (Settings & Logout di header).
 - 📥 **Ekspor Data**: Unduh riwayat transaksi ke format CSV (Excel-ready).
-- 🗓️ **Filter Periode**: Saring data berdasarkan bulan dan tahun spesifik.
 
 ## 🚀 Teknologi
 - **Backend**: Ruby (Rack) + `eksa-server`
